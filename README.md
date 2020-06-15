@@ -524,6 +524,89 @@ only showing top 20 rows
 Crie um dataset chamado *corpora* com a coluna corpora (como descrita acima), as colunas *dominio*, *categorias* e *data*.
 
 Salve este dataframe particionado por *data* e *dominio*.
+== RESPOSTA ==
+```scala
+val noticiasComCorpora = noticiasFinal.withColumn("corpora", concat(col("titulo"), lit("\n"), col("descricao"), lit("\n"), col("conteudo")))
 
-2. Gere um dataset que conte o número de registros por data
+noticiasComCorpora.show(5)
++----------+--------------------+--------------------+--------------------+----------+----+-------------------+--------------------+
+|categorias|            conteudo|           descricao|              titulo|      data|hora|            dominio|             corpora|
++----------+--------------------+--------------------+--------------------+----------+----+-------------------+--------------------+
+|        []|Mercado da Bola 2...|O jogador vai rec...|Time de Belo Hori...|2020-02-13|  20|rss.home.uol.com.br|Time de Belo Hori...|
+|      [G1]|Especialistas ana...|Cientistas e pesq...|Especialistas ana...|2019-10-07|  18|      pox.globo.com|Especialistas ana...|
+|      [G1]|Chile condena 22 ...|Ex-membros da pol...|Chile condena 22 ...|2019-10-07|  18|      pox.globo.com|Chile condena 22 ...|
+|        []|Como ser 'top': U...|A casa de Pedro t...|Como ser 'top': U...|2019-10-27|  21|     rss.uol.com.br|Como ser 'top': U...|
+|      [G1]|A silenciosa epid...|Pouco mais da met...|A silenciosa epid...|2020-03-23|  16|      pox.globo.com|A silenciosa epid...|
++----------+--------------------+--------------------+--------------------+----------+----+-------------------+--------------------+
+only showing top 5 rows
+
+val noticiasCorpora = noticiasComCorpora.select("dominio", "categorias", "data", "corpora")
+
+noticiasCorpora.write.partitionBy("data", "dominio").format("json").save("corpora")
+
+val noticias = spark.read.json("corpora")
+
+noticias.show(5)
++----------+--------------------+----------+-------------------+
+|categorias|             corpora|      data|            dominio|
++----------+--------------------+----------+-------------------+
+|      [G1]|Itaú e outras emp...|2020-04-13|      pox.globo.com|
+|      [G1]|Quando a ditadura...|2020-04-13|      pox.globo.com|
+|      [G1]|Eleição presidenc...|2020-04-13|      pox.globo.com|
+|      [G1]|Itália libera rea...|2020-04-13|      pox.globo.com|
+|        []|Time de Belo Hori...|2020-02-13|rss.home.uol.com.br|
++----------+--------------------+----------+-------------------+
+only showing top 5 rows
+```
+
+2. Gere um dataset que conte o número de registros por data.
+
+== RESPOSTA == 
+```scala
+noticias.groupBy("data").count().show(20)
++----------+-----+
+|      data|count|
++----------+-----+
+|2019-11-18|  156|
+|2020-01-21|  110|
+|2019-09-22|  139|
+|2019-11-01|  134|
+|2019-11-21|  138|
+|2020-04-30|  112|
+|2018-08-08|    1|
+|2019-05-27|    1|
+|2020-03-07|   94|
+|2020-03-13|  111|
+|2020-02-04|  108|
+|2020-02-15|  108|
+|2020-05-23|  117|
+|2018-05-26|    1|
+|2019-10-05|  135|
+|2020-02-12|  114|
+|2018-04-18|    2|
+|2019-10-24|  154|
+|2019-07-08|  122|
+|2019-05-14|    2|
++----------+-----+
+only showing top 20 rows
+```
+
 3. Gere um outro dataset que contém o número de registros por domínio
+```scala
+== RESPOSTA ==
+
+noticias.groupBy("dominio").count().show(20)
++--------------------+-----+
+|             dominio|count|
++--------------------+-----+
+|   brasil.elpais.com|   60|
+|feeds.folha.uol.c...| 5678|
+|       pox.globo.com| 4618|
+|  esporte.uol.com.br|12543|
+|      rss.uol.com.br| 3676|
+| rss.home.uol.com.br| 3423|
++--------------------+-----+
+```
+ 
+
+
